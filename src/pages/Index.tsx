@@ -1,8 +1,76 @@
 import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import Icon from '@/components/ui/icon';
+
+interface Riddle {
+  symbol: string;
+  text: string;
+  code: string;
+  riddle: string;
+  hint: string;
+  answer: string;
+}
 
 const Index = () => {
   const [matrixColumns, setMatrixColumns] = useState<JSX.Element[]>([]);
   const [showMessage, setShowMessage] = useState(false);
+  const [activeRiddle, setActiveRiddle] = useState<number | null>(null);
+  const [userAnswer, setUserAnswer] = useState('');
+  const [solvedRiddles, setSolvedRiddles] = useState<number[]>([]);
+  const [showHint, setShowHint] = useState(false);
+  const [wrongAnswer, setWrongAnswer] = useState(false);
+
+  const riddles: Riddle[] = [
+    {
+      symbol: '⧉',
+      text: 'Портал',
+      code: '0x4A7B',
+      riddle: 'I am always hungry, I must always be fed. The finger I touch will soon turn red. What am I?',
+      hint: 'It consumes everything, leaves only ash',
+      answer: 'fire'
+    },
+    {
+      symbol: '⌬',
+      text: 'Врата',
+      code: '0x232C',
+      riddle: 'I have cities, but no houses. I have mountains, but no trees. I have water, but no fish. What am I?',
+      hint: 'You use it to find your way',
+      answer: 'map'
+    },
+    {
+      symbol: '⍟',
+      text: 'Знак',
+      code: '0x235F',
+      riddle: 'The more you take, the more you leave behind. What are they?',
+      hint: 'You make them when you walk',
+      answer: 'footsteps'
+    },
+    {
+      symbol: '⎔',
+      text: 'Печать',
+      code: '0x2394',
+      riddle: 'I speak without a mouth and hear without ears. I have no body, but come alive with wind. What am I?',
+      hint: 'Mountains know me well',
+      answer: 'echo'
+    },
+    {
+      symbol: '⧈',
+      text: 'Ключ',
+      code: '0x29C8',
+      riddle: 'What can travel around the world while staying in a corner?',
+      hint: 'You put it on letters',
+      answer: 'stamp'
+    },
+    {
+      symbol: '◬',
+      text: 'Код',
+      code: '0x25EC',
+      riddle: 'I am not alive, but I grow. I do not have lungs, but I need air. What am I?',
+      hint: 'Water is my enemy',
+      answer: 'fire'
+    }
+  ];
 
   useEffect(() => {
     const columns = [];
@@ -15,7 +83,7 @@ const Index = () => {
       columns.push(
         <div
           key={i}
-          className="absolute top-0 text-primary/40 font-mono text-sm animate-matrix-fall"
+          className="absolute top-0 text-primary/40 font-mono text-sm animate-matrix-fall whitespace-pre"
           style={{
             left: `${(i * 100) / columnCount}%`,
             animationDelay: `${delay}s`,
@@ -34,9 +102,41 @@ const Index = () => {
     setTimeout(() => setShowMessage(true), 1000);
   }, []);
 
+  const handleRiddleClick = (idx: number) => {
+    if (solvedRiddles.includes(idx)) return;
+    setActiveRiddle(idx);
+    setUserAnswer('');
+    setShowHint(false);
+    setWrongAnswer(false);
+  };
+
+  const handleSubmitAnswer = () => {
+    if (activeRiddle === null) return;
+    
+    const correctAnswer = riddles[activeRiddle].answer.toLowerCase();
+    const userAnswerLower = userAnswer.toLowerCase().trim();
+    
+    if (userAnswerLower === correctAnswer) {
+      setSolvedRiddles([...solvedRiddles, activeRiddle]);
+      setActiveRiddle(null);
+      setUserAnswer('');
+      setShowHint(false);
+      setWrongAnswer(false);
+    } else {
+      setWrongAnswer(true);
+      setTimeout(() => setWrongAnswer(false), 500);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSubmitAnswer();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background overflow-hidden relative">
-      <div className="absolute inset-0 pointer-events-none">
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {matrixColumns}
       </div>
 
@@ -79,7 +179,7 @@ const Index = () => {
         </div>
       </div>
 
-      <div className="relative z-20 min-h-screen flex flex-col items-center justify-center px-6 md:px-12">
+      <div className="relative z-20 min-h-screen flex flex-col items-center justify-center px-6 md:px-12 py-12">
         <div className={`text-center space-y-8 transition-all duration-1000 ${showMessage ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
           <h1 className="text-4xl md:text-7xl font-bold text-primary animate-glitch" style={{ fontFamily: 'Cinzel, serif' }}>
             ТАЙНА
@@ -96,21 +196,19 @@ const Index = () => {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-12 max-w-2xl mx-auto">
-            {[
-              { symbol: '⧉', text: 'Портал', code: '0x4A7B' },
-              { symbol: '⌬', text: 'Врата', code: '0x232C' },
-              { symbol: '⍟', text: 'Знак', code: '0x235F' },
-              { symbol: '⎔', text: 'Печать', code: '0x2394' },
-              { symbol: '⧈', text: 'Ключ', code: '0x29C8' },
-              { symbol: '◬', text: 'Код', code: '0x25EC' },
-            ].map((item, idx) => (
+            {riddles.map((item, idx) => (
               <div
                 key={idx}
-                className="group bg-card/30 backdrop-blur-sm border border-primary/20 p-6 rounded-lg hover:border-primary/60 hover:bg-card/50 transition-all duration-300 cursor-pointer"
+                onClick={() => handleRiddleClick(idx)}
+                className={`group bg-card/30 backdrop-blur-sm border p-6 rounded-lg transition-all duration-300 cursor-pointer ${
+                  solvedRiddles.includes(idx)
+                    ? 'border-primary bg-primary/20'
+                    : 'border-primary/20 hover:border-primary/60 hover:bg-card/50'
+                }`}
                 style={{ animationDelay: `${idx * 0.1}s` }}
               >
-                <div className="text-4xl text-primary mb-2 group-hover:animate-glitch">
-                  {item.symbol}
+                <div className={`text-4xl mb-2 ${solvedRiddles.includes(idx) ? 'text-primary' : 'text-primary group-hover:animate-glitch'}`}>
+                  {solvedRiddles.includes(idx) ? '✓' : item.symbol}
                 </div>
                 <p className="text-sm text-foreground/60 mb-1" style={{ fontFamily: 'Cinzel, serif' }}>
                   {item.text}
@@ -122,16 +220,107 @@ const Index = () => {
             ))}
           </div>
 
+          {solvedRiddles.length === 6 && (
+            <div className="mt-8 p-6 bg-primary/20 border border-primary rounded-lg animate-fade-in">
+              <p className="text-xl text-primary font-bold mb-2" style={{ fontFamily: 'Cinzel, serif' }}>
+                THE SEALS ARE BROKEN
+              </p>
+              <p className="text-sm text-foreground/70 font-mono">
+                You have proven yourself worthy. The ancient knowledge is now yours.
+              </p>
+            </div>
+          )}
+
           <div className="mt-12 space-y-2">
             <p className="text-xs md:text-sm text-muted-foreground font-mono opacity-50">
               [СИСТЕМА АКТИВИРОВАНА]
             </p>
             <p className="text-xs md:text-sm text-muted-foreground font-mono opacity-50">
-              [ОЖИДАНИЕ КОМАНДЫ...]
+              [{solvedRiddles.length}/6 ПЕЧАТЕЙ СНЯТЫ]
             </p>
           </div>
         </div>
       </div>
+
+      {activeRiddle !== null && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-card border border-primary/40 rounded-lg p-6 md:p-8 max-w-lg w-full animate-fade-in">
+            <div className="flex justify-between items-start mb-6">
+              <div className="flex items-center gap-3">
+                <span className="text-4xl text-primary">{riddles[activeRiddle].symbol}</span>
+                <div>
+                  <p className="text-lg font-bold text-foreground" style={{ fontFamily: 'Cinzel, serif' }}>
+                    {riddles[activeRiddle].text}
+                  </p>
+                  <p className="text-xs text-muted-foreground font-mono">
+                    {riddles[activeRiddle].code}
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setActiveRiddle(null);
+                  setUserAnswer('');
+                  setShowHint(false);
+                }}
+                className="text-foreground/60 hover:text-foreground"
+              >
+                <Icon name="X" size={20} />
+              </Button>
+            </div>
+
+            <div className={`mb-6 p-4 bg-secondary/30 rounded-lg border border-primary/20 ${wrongAnswer ? 'animate-glitch' : ''}`}>
+              <p className="text-foreground/90 text-base leading-relaxed">
+                {riddles[activeRiddle].riddle}
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <Input
+                type="text"
+                placeholder="Enter your answer..."
+                value={userAnswer}
+                onChange={(e) => setUserAnswer(e.target.value)}
+                onKeyPress={handleKeyPress}
+                className={`bg-background/50 border-primary/30 text-foreground placeholder:text-muted-foreground ${
+                  wrongAnswer ? 'border-red-500' : ''
+                }`}
+                autoFocus
+              />
+
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleSubmitAnswer}
+                  className="flex-1 bg-primary hover:bg-primary/80 text-primary-foreground"
+                >
+                  Submit Answer
+                </Button>
+                <Button
+                  onClick={() => setShowHint(!showHint)}
+                  variant="outline"
+                  className="border-primary/30 text-foreground hover:bg-primary/10"
+                >
+                  <Icon name="Lightbulb" size={18} />
+                </Button>
+              </div>
+
+              {showHint && (
+                <div className="p-3 bg-primary/10 border border-primary/30 rounded text-sm text-foreground/80 animate-fade-in">
+                  <span className="text-primary font-mono">HINT:</span> {riddles[activeRiddle].hint}
+                </div>
+              )}
+
+              {wrongAnswer && (
+                <p className="text-red-400 text-sm font-mono text-center">
+                  [ACCESS DENIED]
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="absolute bottom-4 right-4 text-primary/30 font-mono text-xs animate-pulse">
         v0.0.1-alpha
